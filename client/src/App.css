@@ -1,0 +1,19 @@
+/*
+  App-level styles only.
+
+  Global:
+  - colors
+  - typography
+  - buttons
+  - theme
+  - animations
+  - shadows
+  - responsive utilities
+
+  are handled in index.css.
+*/
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+}
