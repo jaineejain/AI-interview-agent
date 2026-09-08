@@ -12,6 +12,9 @@ import {
   FaCode,
   FaUsers,
   FaSpinner,
+  FaProjectDiagram,
+  FaLaptopCode,
+  FaLayerGroup,
 } from "react-icons/fa";
 import axios from "axios";
 import { ServerUrl } from "../App";
@@ -24,14 +27,73 @@ function Step1SetUp({ onStart }) {
 
   const [role, setRole] = useState("");
   const [experience, setExperience] = useState("");
+
+  // Keep mode for backward compatibility with the existing backend.
   const [mode, setMode] = useState("Technical");
+
+  // New enhanced interview type.
+  const [interviewType, setInterviewType] = useState("Technical");
+
   const [resumeFile, setResumeFile] = useState(null);
   const [loading, setLoading] = useState(false);
+
   const [projects, setProjects] = useState([]);
   const [skills, setSkills] = useState([]);
   const [resumeText, setResumeText] = useState("");
+
   const [analysisDone, setAnalysisDone] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+
+  const interviewTypes = [
+    {
+      value: "Technical",
+      label: "Technical",
+      description: "Skills & problem solving",
+      icon: <FaCode className="text-sm" />,
+    },
+    {
+      value: "HR",
+      label: "HR",
+      description: "Behavioral questions",
+      icon: <FaUsers className="text-sm" />,
+    },
+    {
+      value: "Behavioral",
+      label: "Behavioral",
+      description: "Situational & soft skills",
+      icon: <FaUserTie className="text-sm" />,
+    },
+    {
+      value: "System Design",
+      label: "System Design",
+      description: "Architecture & scalability",
+      icon: <FaProjectDiagram className="text-sm" />,
+    },
+    {
+      value: "Coding",
+      label: "Coding",
+      description: "Programming & algorithms",
+      icon: <FaLaptopCode className="text-sm" />,
+    },
+    {
+      value: "Mixed",
+      label: "Mixed",
+      description: "Technical + HR",
+      icon: <FaLayerGroup className="text-sm" />,
+    },
+  ];
+
+  const handleInterviewTypeChange = (type) => {
+    setInterviewType(type);
+
+    // Existing backend expects mode to be either HR or Technical.
+    // Keep that contract while sending the new interviewType separately.
+    if (type === "HR" || type === "Behavioral") {
+      setMode("HR");
+    } else {
+      setMode("Technical");
+    }
+  };
 
   const handleUploadResume = async () => {
     if (!resumeFile || analyzing) return;
@@ -59,12 +121,14 @@ function Step1SetUp({ onStart }) {
 
       setAnalyzing(false);
     } catch (error) {
-      console.log(error);
+      console.log("RESUME ANALYSIS ERROR:", error.response?.data || error);
       setAnalyzing(false);
     }
   };
 
   const handleStart = async () => {
+    if (!role || !experience || loading) return;
+
     setLoading(true);
 
     try {
@@ -73,7 +137,13 @@ function Step1SetUp({ onStart }) {
         {
           role,
           experience,
+
+          // Existing field kept for compatibility.
           mode,
+
+          // New field used by the enhanced question engine.
+          interviewType,
+
           resumeText,
           projects,
           skills,
@@ -95,8 +165,12 @@ function Step1SetUp({ onStart }) {
       setLoading(false);
       onStart(result.data);
     } catch (error) {
-      console.log("START INTERVIEW ERROR:", error.response?.data);
+      console.log(
+        "START INTERVIEW ERROR:",
+        error.response?.data || error.message,
+      );
       console.log("STATUS:", error.response?.status);
+
       setLoading(false);
     }
   };
@@ -220,6 +294,7 @@ function Step1SetUp({ onStart }) {
 
               <div className="space-y-5">
                 {/* Role */}
+
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-[var(--ink-soft)]">
                     Job role
@@ -251,6 +326,7 @@ function Step1SetUp({ onStart }) {
                 </div>
 
                 {/* Experience */}
+
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-[var(--ink-soft)]">
                     Experience
@@ -281,124 +357,122 @@ function Step1SetUp({ onStart }) {
                 </div>
 
                 {/* Interview Type */}
+
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-[var(--ink-soft)]">
-                    Interview type
-                  </label>
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <label className="block text-sm font-semibold text-[var(--ink-soft)]">
+                      Interview type
+                    </label>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Technical */}
-                    <button
-                      type="button"
-                      onClick={() => setMode("Technical")}
-                      className={`
-                        focus-ring
-                        flex items-center gap-3 rounded-xl
-                        border p-3.5 text-left
-                        transition-all duration-200
-                        ${
-                          mode === "Technical"
-                            ? "border-[var(--blue)] bg-[var(--blue-soft)] shadow-sm"
-                            : "border-[var(--line-strong)] bg-[var(--surface)] hover:border-[var(--blue)] hover:bg-[var(--surface-2)]"
-                        }
-                      `}
-                    >
-                      <div
-                        className={`
-                          flex h-9 w-9 shrink-0 items-center justify-center rounded-lg
-                          ${
-                            mode === "Technical"
-                              ? "bg-[var(--blue)] text-white"
-                              : "bg-[var(--surface-2)] text-[var(--muted)]"
-                          }
-                        `}
-                      >
-                        <FaCode className="text-sm" />
-                      </div>
-
-                      <div className="min-w-0">
-                        <p
-                          className={`
-                            text-sm font-bold
-                            ${
-                              mode === "Technical"
-                                ? "text-[var(--blue)]"
-                                : "text-[var(--ink-soft)]"
-                            }
-                          `}
-                        >
-                          Technical
-                        </p>
-
-                        <p className="mt-0.5 text-[11px] leading-4 text-[var(--muted)]">
-                          Skills & problem solving
-                        </p>
-                      </div>
-                    </button>
-
-                    {/* HR */}
-                    <button
-                      type="button"
-                      onClick={() => setMode("HR")}
-                      className={`
-                        focus-ring
-                        flex items-center gap-3 rounded-xl
-                        border p-3.5 text-left
-                        transition-all duration-200
-                        ${
-                          mode === "HR"
-                            ? "border-[var(--blue)] bg-[var(--blue-soft)] shadow-sm"
-                            : "border-[var(--line-strong)] bg-[var(--surface)] hover:border-[var(--blue)] hover:bg-[var(--surface-2)]"
-                        }
-                      `}
-                    >
-                      <div
-                        className={`
-                          flex h-9 w-9 shrink-0 items-center justify-center rounded-lg
-                          ${
-                            mode === "HR"
-                              ? "bg-[var(--blue)] text-white"
-                              : "bg-[var(--surface-2)] text-[var(--muted)]"
-                          }
-                        `}
-                      >
-                        <FaUsers className="text-sm" />
-                      </div>
-
-                      <div className="min-w-0">
-                        <p
-                          className={`
-                            text-sm font-bold
-                            ${
-                              mode === "HR"
-                                ? "text-[var(--blue)]"
-                                : "text-[var(--ink-soft)]"
-                            }
-                          `}
-                        >
-                          HR
-                        </p>
-
-                        <p className="mt-0.5 text-[11px] leading-4 text-[var(--muted)]">
-                          Behavioral questions
-                        </p>
-                      </div>
-                    </button>
+                    <span className="text-[10px] font-medium text-[var(--muted)]">
+                      Choose your focus
+                    </span>
                   </div>
 
-                  {/* Hidden native select */}
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {interviewTypes.map((type) => {
+                      const selected = interviewType === type.value;
+
+                      return (
+                        <button
+                          key={type.value}
+                          type="button"
+                          onClick={() => handleInterviewTypeChange(type.value)}
+                          className={`
+                            focus-ring
+                            flex items-center gap-3 rounded-xl
+                            border p-3.5 text-left
+                            transition-all duration-200
+                            ${
+                              selected
+                                ? "border-[var(--blue)] bg-[var(--blue-soft)] shadow-sm"
+                                : "border-[var(--line-strong)] bg-[var(--surface)] hover:border-[var(--blue)] hover:bg-[var(--surface-2)]"
+                            }
+                          `}
+                        >
+                          <div
+                            className={`
+                              flex h-9 w-9 shrink-0 items-center justify-center rounded-lg
+                              ${
+                                selected
+                                  ? "bg-[var(--blue)] text-white"
+                                  : "bg-[var(--surface-2)] text-[var(--muted)]"
+                              }
+                            `}
+                          >
+                            {type.icon}
+                          </div>
+
+                          <div className="min-w-0">
+                            <p
+                              className={`
+                                text-sm font-bold
+                                ${
+                                  selected
+                                    ? "text-[var(--blue)]"
+                                    : "text-[var(--ink-soft)]"
+                                }
+                              `}
+                            >
+                              {type.label}
+                            </p>
+
+                            <p className="mt-0.5 text-[11px] leading-4 text-[var(--muted)]">
+                              {type.description}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Hidden native select for compatibility/accessibility */}
+
                   <select
-                    value={mode}
-                    onChange={(e) => setMode(e.target.value)}
+                    value={interviewType}
+                    onChange={(e) => handleInterviewTypeChange(e.target.value)}
                     className="sr-only"
                     aria-hidden="true"
                     tabIndex="-1"
                   >
-                    <option value="Technical">Technical Interview</option>
-
-                    <option value="HR">HR Interview</option>
+                    {interviewTypes.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label} Interview
+                      </option>
+                    ))}
                   </select>
                 </div>
+
+                {/* Selected Interview Type Summary */}
+
+                <motion.div
+                  key={interviewType}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="
+                    rounded-xl
+                    border border-[var(--line)]
+                    bg-[var(--surface-2)]
+                    px-4 py-3
+                  "
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 text-[var(--blue)]">
+                      <FaChartLine />
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-bold text-[var(--ink-soft)]">
+                        {interviewType} interview selected
+                      </p>
+
+                      <p className="mt-1 text-xs leading-5 text-[var(--muted)]">
+                        Your questions will be generated around your role,
+                        experience, skills, projects, and this interview type.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
             </div>
 
@@ -444,13 +518,13 @@ function Step1SetUp({ onStart }) {
                 >
                   <div
                     className="
-                    mx-auto mb-4 flex h-14 w-14
-                    items-center justify-center
-                    rounded-xl bg-[var(--blue-soft)]
-                    text-[var(--blue)]
-                    transition-transform duration-200
-                    group-hover:scale-105
-                  "
+                      mx-auto mb-4 flex h-14 w-14
+                      items-center justify-center
+                      rounded-xl bg-[var(--blue-soft)]
+                      text-[var(--blue)]
+                      transition-transform duration-200
+                      group-hover:scale-105
+                    "
                   >
                     <FaFileUpload className="text-xl" />
                   </div>
@@ -468,7 +542,14 @@ function Step1SetUp({ onStart }) {
                     accept="application/pdf"
                     id="resumeUpload"
                     className="hidden"
-                    onChange={(e) => setResumeFile(e.target.files[0])}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+
+                      if (!file) return;
+
+                      setResumeFile(file);
+                      setAnalysisDone(false);
+                    }}
                   />
 
                   {resumeFile && (
@@ -508,6 +589,7 @@ function Step1SetUp({ onStart }) {
               )}
 
               {/* Resume analyzed */}
+
               {analysisDone && (
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
@@ -523,12 +605,12 @@ function Step1SetUp({ onStart }) {
                     <div className="flex items-center gap-3">
                       <div
                         className="
-                        flex h-10 w-10 shrink-0
-                        items-center justify-center
-                        rounded-xl
-                        bg-[var(--surface)]
-                        text-[var(--success)]
-                      "
+                          flex h-10 w-10 shrink-0
+                          items-center justify-center
+                          rounded-xl
+                          bg-[var(--surface)]
+                          text-[var(--success)]
+                        "
                       >
                         <FaCheckCircle />
                       </div>
@@ -546,12 +628,12 @@ function Step1SetUp({ onStart }) {
 
                     <span
                       className="
-                      shrink-0 rounded-full
-                      bg-[var(--surface)]
-                      px-2.5 py-1
-                      text-[10px] font-bold
-                      text-[var(--success)]
-                    "
+                        shrink-0 rounded-full
+                        bg-[var(--surface)]
+                        px-2.5 py-1
+                        text-[10px] font-bold
+                        text-[var(--success)]
+                      "
                     >
                       Ready
                     </span>
@@ -603,18 +685,26 @@ function Step1SetUp({ onStart }) {
                       </div>
                     </div>
                   )}
+
+                  {projects.length === 0 && skills.length === 0 && (
+                    <p className="text-xs leading-5 text-[var(--muted)]">
+                      Resume was processed, but no specific projects or skills
+                      were extracted. The interview can still be started.
+                    </p>
+                  )}
                 </motion.div>
               )}
 
               {/* Why upload */}
+
               {!analysisDone && (
                 <div
                   className="
-                  mt-5 rounded-xl
-                  border border-[var(--line)]
-                  bg-[var(--surface)]
-                  p-4
-                "
+                    mt-5 rounded-xl
+                    border border-[var(--line)]
+                    bg-[var(--surface)]
+                    p-4
+                  "
                 >
                   <div className="flex gap-3">
                     <div className="mt-0.5 text-[var(--blue)]">
@@ -628,7 +718,8 @@ function Step1SetUp({ onStart }) {
 
                       <p className="mt-1 text-xs leading-5 text-[var(--muted)]">
                         Your projects and skills can be used to create more
-                        relevant interview questions.
+                        relevant interview questions and personalized
+                        follow-ups.
                       </p>
                     </div>
                   </div>
@@ -639,7 +730,7 @@ function Step1SetUp({ onStart }) {
 
           {/* ===================================================
               BOTTOM ACTION
-          ==================================================== */}
+          ===================================================== */}
 
           <div className="border-t border-[var(--line)] bg-[var(--surface)] px-6 py-5 sm:px-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -649,7 +740,8 @@ function Step1SetUp({ onStart }) {
                 </p>
 
                 <p className="mt-1 text-xs text-[var(--muted)]">
-                  Your AI interviewer will guide you through the session.
+                  {interviewType} interview • AI-generated questions • adaptive
+                  follow-ups
                 </p>
               </div>
 
@@ -707,8 +799,8 @@ function Step1SetUp({ onStart }) {
             },
             {
               icon: <FaChartLine />,
-              title: "Actionable feedback",
-              text: "Review your performance after",
+              title: "Adaptive feedback",
+              text: "AI follows up based on your answers",
             },
           ].map((item, index) => (
             <motion.div
@@ -728,12 +820,12 @@ function Step1SetUp({ onStart }) {
             >
               <div
                 className="
-                flex h-9 w-9 shrink-0
-                items-center justify-center
-                rounded-lg
-                bg-[var(--surface-2)]
-                text-sm text-[var(--blue)]
-              "
+                  flex h-9 w-9 shrink-0
+                  items-center justify-center
+                  rounded-lg
+                  bg-[var(--surface-2)]
+                  text-sm text-[var(--blue)]
+                "
               >
                 {item.icon}
               </div>

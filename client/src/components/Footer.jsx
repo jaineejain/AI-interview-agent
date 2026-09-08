@@ -3,20 +3,27 @@ import { BsRobot, BsArrowUpRight } from "react-icons/bs";
 
 function Footer() {
   return (
-    <footer className="bg-transparent px-4 pb-6 pt-4 sm:px-6 sm:pb-8">
+    <footer className="bg-[var(--canvas)] px-4 pb-6 pt-4 transition-colors duration-200 sm:px-6 sm:pb-8">
       <div
         className="
           mx-auto w-full max-w-6xl overflow-hidden
           rounded-2xl
           border border-[var(--line)]
-          bg-[var(--ink)]
+          bg-[#101828]
           px-6 py-8
           shadow-[0_18px_45px_rgba(15,23,42,0.10)]
+          transition-colors duration-200
+          dark:bg-[#151a22]
           sm:px-8 sm:py-9
         "
       >
+        {/* =====================================================
+            TOP
+        ====================================================== */}
+
         <div className="flex flex-col gap-7 sm:flex-row sm:items-center sm:justify-between">
           {/* Brand */}
+
           <div className="flex items-center gap-3">
             <div
               className="
@@ -30,7 +37,7 @@ function Footer() {
             </div>
 
             <div>
-              <h2 className="font-display text-sm font-bold tracking-tight text-white">
+              <h2 className="text-sm font-bold tracking-tight text-white">
                 InterviewIQ.AI
               </h2>
 
@@ -41,16 +48,24 @@ function Footer() {
           </div>
 
           {/* Small product marker */}
+
           <div className="hidden items-center gap-2 text-xs font-medium text-white/45 sm:flex">
-            Practice
+            <span>Practice</span>
+
             <BsArrowUpRight className="text-[10px]" />
-            Improve
+
+            <span>Improve</span>
+
             <BsArrowUpRight className="text-[10px]" />
-            Perform
+
+            <span>Perform</span>
           </div>
         </div>
 
-        {/* Description */}
+        {/* =====================================================
+            DESCRIPTION
+        ====================================================== */}
+
         <div className="mt-7 border-t border-white/10 pt-6">
           <p className="max-w-2xl text-xs leading-5 text-white/55 sm:text-sm sm:leading-6">
             AI-powered interview preparation designed to improve communication
@@ -58,7 +73,10 @@ function Footer() {
           </p>
         </div>
 
-        {/* Bottom */}
+        {/* =====================================================
+            BOTTOM
+        ====================================================== */}
+
         <div className="mt-6 flex flex-col gap-2 border-t border-white/10 pt-5 text-[10px] text-white/35 sm:flex-row sm:items-center sm:justify-between">
           <span>InterviewIQ.AI</span>
 

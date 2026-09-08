@@ -14,12 +14,24 @@ import {
   FaSpinner,
   FaKeyboard,
   FaChartLine,
+  FaLightbulb,
+  FaExclamationTriangle,
 } from "react-icons/fa";
 import axios from "axios";
 import { ServerUrl } from "../App";
 
 function Step2Interview({ interviewData, onFinish }) {
-  const { interviewId, questions, userName } = interviewData;
+  const {
+    interviewId,
+    questions: initialQuestions = [],
+    userName,
+  } = interviewData;
+
+  // =========================================================
+  // QUESTIONS
+  // =========================================================
+
+  const [questions, setQuestions] = useState(initialQuestions);
 
   const [isIntroPhase, setIsIntroPhase] = useState(true);
 
@@ -52,7 +64,11 @@ function Step2Interview({ interviewData, onFinish }) {
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
 
-  const [timeLeft, setTimeLeft] = useState(questions[0]?.timeLimit || 60);
+  const [evaluation, setEvaluation] = useState(null);
+
+  const [timeLeft, setTimeLeft] = useState(
+    initialQuestions[0]?.timeLimit || 60,
+  );
 
   const [selectedVoice, setSelectedVoice] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -285,7 +301,9 @@ function Step2Interview({ interviewData, onFinish }) {
       } else if (currentQuestion) {
         await new Promise((resolve) => setTimeout(resolve, 800));
 
-        if (currentIndex === questions.length - 1) {
+        if (currentQuestion.isFollowUp) {
+          await speakText("I'd like to explore that answer a little further.");
+        } else if (currentIndex === questions.length - 1) {
           await speakText("Alright, this one might be a bit more challenging.");
         }
 
@@ -294,7 +312,7 @@ function Step2Interview({ interviewData, onFinish }) {
     };
 
     runIntro();
-  }, [isIntroPhase, currentIndex]);
+  }, [isIntroPhase, currentIndex, questions.length]);
 
   // =========================================================
   // INTERVIEW TIMER
@@ -303,6 +321,7 @@ function Step2Interview({ interviewData, onFinish }) {
   useEffect(() => {
     if (isIntroPhase) return;
     if (!currentQuestion) return;
+    if (feedback) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -316,7 +335,7 @@ function Step2Interview({ interviewData, onFinish }) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isIntroPhase, currentIndex]);
+  }, [isIntroPhase, currentIndex, currentQuestion, feedback]);
 
   // =========================================================
   // RESET QUESTION TIMER
@@ -483,6 +502,7 @@ function Step2Interview({ interviewData, onFinish }) {
 
   const submitAnswer = async () => {
     if (isSubmitting) return;
+    if (!currentQuestion) return;
 
     isMicOnRef.current = false;
 
@@ -491,6 +511,7 @@ function Step2Interview({ interviewData, onFinish }) {
     setIsMicOn(false);
 
     setIsSubmitting(true);
+    setSpeechError("");
 
     try {
       const result = await axios.post(
@@ -506,15 +527,34 @@ function Step2Interview({ interviewData, onFinish }) {
         },
       );
 
-      setFeedback(result.data.feedback);
+      setFeedback(result.data.feedback || "Answer evaluated successfully.");
 
-      speakText(result.data.feedback);
+      setEvaluation({
+        score: result.data.score || 0,
+        confidence: result.data.confidence || 0,
+        communication: result.data.communication || 0,
+        correctness: result.data.correctness || 0,
+        strengths: result.data.strengths || [],
+        weaknesses: result.data.weaknesses || [],
+        skills: result.data.skills || [],
+        improvedAnswer: result.data.improvedAnswer || "",
+        followUp: result.data.followUp || null,
+      });
+
+      await speakText(
+        result.data.feedback || "Your answer has been evaluated.",
+      );
 
       setIsSubmitting(false);
     } catch (error) {
-      console.log(error);
+      console.log("Submit answer error:", error);
 
       setIsSubmitting(false);
+
+      setSpeechError(
+        error.response?.data?.message ||
+          "Unable to evaluate the answer. Please try again.",
+      );
     }
   };
 
@@ -523,19 +563,88 @@ function Step2Interview({ interviewData, onFinish }) {
   // =========================================================
 
   const handleNext = async () => {
+    if (isSubmitting) return;
+
     isMicOnRef.current = false;
 
     stopMic();
 
     setIsMicOn(false);
 
+    const followUp = evaluation?.followUp;
+
+    // =======================================================
+    // ADAPTIVE FOLLOW-UP
+    // =======================================================
+
+    if (
+      followUp &&
+      followUp.shouldAsk &&
+      typeof followUp.question === "string" &&
+      followUp.question.trim()
+    ) {
+      const newFollowUpQuestion = {
+        question: followUp.question.trim(),
+        difficulty: followUp.difficulty || "medium",
+        timeLimit:
+          followUp.difficulty === "hard"
+            ? 120
+            : followUp.difficulty === "easy"
+              ? 60
+              : 90,
+        isFollowUp: true,
+        parentQuestionIndex: currentIndex,
+      };
+
+      const followUpIndex = currentIndex + 1;
+
+      setQuestions((prevQuestions) => {
+        const alreadyExists = prevQuestions.some(
+          (item) =>
+            item.question?.trim() === newFollowUpQuestion.question.trim(),
+        );
+
+        if (alreadyExists) {
+          return prevQuestions;
+        }
+
+        const updatedQuestions = [...prevQuestions];
+
+        updatedQuestions.splice(followUpIndex, 0, newFollowUpQuestion);
+
+        return updatedQuestions;
+      });
+
+      setAnswer("");
+      setInterimTranscript("");
+      setFeedback("");
+      setEvaluation(null);
+      setRecordingTime(0);
+      setSpeechError("");
+
+      await speakText("Let's explore that answer a little further.");
+
+      // IMPORTANT:
+      // Backend inserts follow-up at currentIndex + 1,
+      // so frontend must move to the same position.
+      setCurrentIndex(followUpIndex);
+
+      return;
+    }
+
+    // =======================================================
+    // NORMAL NEXT QUESTION
+    // =======================================================
+
     setAnswer("");
     setInterimTranscript("");
     setFeedback("");
+    setEvaluation(null);
     setRecordingTime(0);
+    setSpeechError("");
 
     if (currentIndex + 1 >= questions.length) {
-      finishInterview();
+      await finishInterview();
       return;
     }
 
@@ -570,7 +679,12 @@ function Step2Interview({ interviewData, onFinish }) {
 
       onFinish(result.data);
     } catch (error) {
-      console.log(error);
+      console.log("Finish interview error:", error);
+
+      setSpeechError(
+        error.response?.data?.message ||
+          "Unable to finish the interview. Please try again.",
+      );
     }
   };
 
@@ -659,6 +773,9 @@ function Step2Interview({ interviewData, onFinish }) {
   const answerPreview =
     answer + (interimTranscript ? ` ${interimTranscript}` : "");
 
+  const progressPercentage =
+    questions.length > 0 ? ((currentIndex + 1) / questions.length) * 100 : 0;
+
   return (
     <motion.main
       initial={{ opacity: 0 }}
@@ -700,7 +817,9 @@ function Step2Interview({ interviewData, onFinish }) {
 
                 <span className="text-sm font-bold text-[#101828]">
                   {currentIndex + 1}
+
                   <span className="mx-1 text-[#98a2b3]">/</span>
+
                   {questions.length}
                 </span>
               </div>
@@ -760,8 +879,6 @@ function Step2Interview({ interviewData, onFinish }) {
                   className="aspect-[4/3] w-full object-cover"
                 />
 
-                {/* Video status */}
-
                 <div className="absolute bottom-3 left-3 right-3">
                   <div className="flex items-center gap-2 rounded-lg bg-[#101828]/85 px-3 py-2 backdrop-blur-sm">
                     <span
@@ -785,8 +902,14 @@ function Step2Interview({ interviewData, onFinish }) {
 
               {subtitle && (
                 <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{
+                    opacity: 0,
+                    y: 6,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
                   className="mt-4 rounded-xl border border-[#dbeafe] bg-[#eff6ff] p-4"
                 >
                   <div className="mb-2 flex items-center gap-2">
@@ -878,13 +1001,15 @@ function Step2Interview({ interviewData, onFinish }) {
 
                   <div className="h-1.5 overflow-hidden rounded-full bg-[#eaecf0]">
                     <motion.div
-                      initial={{ width: 0 }}
-                      animate={{
-                        width: `${
-                          ((currentIndex + 1) / questions.length) * 100
-                        }%`,
+                      initial={{
+                        width: 0,
                       }}
-                      transition={{ duration: 0.35 }}
+                      animate={{
+                        width: `${progressPercentage}%`,
+                      }}
+                      transition={{
+                        duration: 0.35,
+                      }}
                       className="h-full rounded-full bg-[#2563eb]"
                     />
                   </div>
@@ -903,8 +1028,14 @@ function Step2Interview({ interviewData, onFinish }) {
             {isIntroPhase ? (
               <div className="flex flex-1 items-center justify-center">
                 <motion.div
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{
+                    opacity: 0,
+                    y: 15,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
                   className="w-full max-w-2xl text-center"
                 >
                   <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eff6ff] text-[#2563eb]">
@@ -972,8 +1103,14 @@ function Step2Interview({ interviewData, onFinish }) {
 
                 <div className="mb-5">
                   <div className="mb-2 flex items-center justify-between gap-4">
-                    <div>
+                    <div className="flex items-center gap-2">
                       <p className="eyebrow">Question {currentIndex + 1}</p>
+
+                      {currentQuestion?.isFollowUp && (
+                        <span className="rounded-full bg-[#fef3c7] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#92400e]">
+                          Adaptive follow-up
+                        </span>
+                      )}
                     </div>
 
                     <span className="hidden items-center gap-2 text-xs font-medium text-[#667085] sm:flex">
@@ -984,13 +1121,27 @@ function Step2Interview({ interviewData, onFinish }) {
 
                   <motion.div
                     key={currentIndex}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{
+                      opacity: 0,
+                      y: 8,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                    }}
                     className="rounded-2xl border border-[#dbeafe] bg-[#f8fbff] p-5 sm:p-6"
                   >
                     <h1 className="text-xl font-bold leading-8 text-[#101828] sm:text-2xl">
                       {currentQuestion?.question}
                     </h1>
+
+                    {currentQuestion?.isFollowUp && (
+                      <div className="mt-4 flex items-center gap-2 text-xs font-medium text-[#667085]">
+                        <FaLightbulb className="text-[#f59e0b]" />
+                        The interviewer generated this question from your
+                        previous answer.
+                      </div>
+                    )}
                   </motion.div>
                 </div>
 
@@ -1031,7 +1182,9 @@ function Step2Interview({ interviewData, onFinish }) {
                           disabled={
                             !isSpeechSupported || isAIPlaying || isSubmitting
                           }
-                          whileTap={{ scale: 0.95 }}
+                          whileTap={{
+                            scale: 0.95,
+                          }}
                           className={`flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-sm transition ${
                             isListening
                               ? "bg-[#dc2626] hover:bg-[#b91c1c]"
@@ -1054,8 +1207,12 @@ function Step2Interview({ interviewData, onFinish }) {
 
                         {isListening && (
                           <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
+                            initial={{
+                              opacity: 0,
+                            }}
+                            animate={{
+                              opacity: 1,
+                            }}
                             className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-white bg-[#dc2626]"
                           />
                         )}
@@ -1068,12 +1225,19 @@ function Step2Interview({ interviewData, onFinish }) {
                   <div className="mt-3 min-h-[42px]">
                     {isListening ? (
                       <motion.div
-                        initial={{ opacity: 0, y: 3 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        initial={{
+                          opacity: 0,
+                          y: 3,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                        }}
                         className="flex flex-wrap items-center gap-3 rounded-xl border border-[#fecaca] bg-[#fef2f2] px-4 py-2.5"
                       >
                         <span className="relative flex h-2.5 w-2.5">
                           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#dc2626] opacity-50" />
+
                           <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#dc2626]" />
                         </span>
 
@@ -1123,8 +1287,6 @@ function Step2Interview({ interviewData, onFinish }) {
                       </div>
                     )}
 
-                    {/* Unsupported browser */}
-
                     {!isSpeechSupported && (
                       <div className="mt-2 rounded-lg border border-[#fed7aa] bg-[#fff7ed] px-3 py-2">
                         <p className="text-xs font-medium text-[#c2410c]">
@@ -1133,8 +1295,6 @@ function Step2Interview({ interviewData, onFinish }) {
                         </p>
                       </div>
                     )}
-
-                    {/* Speech error */}
 
                     {speechError && isSpeechSupported && (
                       <div className="mt-2 rounded-lg border border-[#fed7aa] bg-[#fff7ed] px-3 py-2">
@@ -1156,7 +1316,9 @@ function Step2Interview({ interviewData, onFinish }) {
                       <motion.button
                         onClick={submitAnswer}
                         disabled={isSubmitting}
-                        whileTap={{ scale: 0.98 }}
+                        whileTap={{
+                          scale: 0.98,
+                        }}
                         className="button-accent flex w-full items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-sm font-bold shadow-sm disabled:bg-[#d0d5dd] disabled:text-[#98a2b3] sm:w-auto"
                       >
                         {isSubmitting ? (
@@ -1174,8 +1336,14 @@ function Step2Interview({ interviewData, onFinish }) {
                     </div>
                   ) : (
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      initial={{
+                        opacity: 0,
+                        y: 10,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                      }}
                       className="mt-5 rounded-2xl border border-[#d1fadf] bg-[#f6fef9] p-5"
                     >
                       <div className="mb-4 flex items-start gap-3">
@@ -1194,19 +1362,131 @@ function Step2Interview({ interviewData, onFinish }) {
                         </div>
                       </div>
 
+                      {/* Feedback */}
+
                       <div className="rounded-xl border border-[#d1fadf] bg-white p-4">
                         <p className="text-sm leading-7 text-[#344054]">
                           {feedback}
                         </p>
                       </div>
 
+                      {/* Quick scores */}
+
+                      {evaluation && (
+                        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                          {[
+                            {
+                              label: "Score",
+                              value: evaluation.score,
+                            },
+                            {
+                              label: "Confidence",
+                              value: evaluation.confidence,
+                            },
+                            {
+                              label: "Communication",
+                              value: evaluation.communication,
+                            },
+                            {
+                              label: "Correctness",
+                              value: evaluation.correctness,
+                            },
+                          ].map((item) => (
+                            <div
+                              key={item.label}
+                              className="rounded-xl border border-[#eaecf0] bg-white p-3"
+                            >
+                              <p className="text-[10px] font-bold uppercase tracking-wide text-[#98a2b3]">
+                                {item.label}
+                              </p>
+
+                              <p className="mt-1 text-lg font-bold text-[#101828]">
+                                {item.value}/10
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Strengths */}
+
+                      {evaluation?.strengths?.length > 0 && (
+                        <div className="mt-4 rounded-xl border border-[#d1fadf] bg-white p-4">
+                          <div className="mb-2 flex items-center gap-2">
+                            <FaCheckCircle className="text-xs text-[#16a34a]" />
+
+                            <p className="text-xs font-bold uppercase tracking-wide text-[#344054]">
+                              Strengths
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            {evaluation.strengths.map((strength, index) => (
+                              <span
+                                key={index}
+                                className="rounded-full bg-[#ecfdf3] px-3 py-1.5 text-[11px] font-semibold text-[#15803d]"
+                              >
+                                {strength}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Weaknesses */}
+
+                      {evaluation?.weaknesses?.length > 0 && (
+                        <div className="mt-3 rounded-xl border border-[#fed7aa] bg-[#fffaf5] p-4">
+                          <div className="mb-2 flex items-center gap-2">
+                            <FaExclamationTriangle className="text-xs text-[#f59e0b]" />
+
+                            <p className="text-xs font-bold uppercase tracking-wide text-[#92400e]">
+                              Improve
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            {evaluation.weaknesses.map((weakness, index) => (
+                              <span
+                                key={index}
+                                className="rounded-full bg-[#fff7ed] px-3 py-1.5 text-[11px] font-semibold text-[#c2410c]"
+                              >
+                                {weakness}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Improved Answer */}
+
+                      {evaluation?.improvedAnswer && (
+                        <div className="mt-3 rounded-xl border border-[#dbeafe] bg-[#f8fbff] p-4">
+                          <div className="mb-2 flex items-center gap-2">
+                            <FaLightbulb className="text-xs text-[#2563eb]" />
+
+                            <p className="text-xs font-bold uppercase tracking-wide text-[#1d4ed8]">
+                              Better way to answer
+                            </p>
+                          </div>
+
+                          <p className="text-sm leading-6 text-[#344054]">
+                            {evaluation.improvedAnswer}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Next button */}
+
                       <button
                         onClick={handleNext}
                         className="button-accent mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold shadow-sm"
                       >
-                        {currentIndex + 1 >= questions.length
-                          ? "Finish Interview"
-                          : "Next Question"}
+                        {evaluation?.followUp?.shouldAsk
+                          ? "Answer Follow-up"
+                          : currentIndex + 1 >= questions.length
+                            ? "Finish Interview"
+                            : "Next Question"}
 
                         <FaArrowRight className="text-xs" />
                       </button>

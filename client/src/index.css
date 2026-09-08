@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* =========================================================
+   GOOGLE FONTS
+========================================================= */
+
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
 
 /* =========================================================
@@ -9,76 +13,110 @@
 :root {
   font-family: "DM Sans", "Segoe UI", sans-serif;
 
-  color: #101828;
-  background: #f7f8fa;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Core */
+  color-scheme: light;
+
+  /* =======================================================
+     CORE
+  ======================================================= */
+
   --ink: #101828;
   --ink-soft: #344054;
   --muted: #667085;
   --muted-light: #98a2b3;
 
-  /* Borders */
+  /* =======================================================
+     BORDERS
+  ======================================================= */
+
   --line: #eaecf0;
   --line-strong: #d0d5dd;
 
-  /* Surfaces */
+  /* =======================================================
+     SURFACES
+  ======================================================= */
+
   --surface: #ffffff;
   --surface-soft: #f9fafb;
   --surface-muted: #f2f4f7;
 
-  /* Page */
+  /* =======================================================
+     PAGE
+  ======================================================= */
+
   --canvas: #f7f8fa;
   --canvas-deep: #f2f4f7;
 
-  /* Brand */
+  /* =======================================================
+     BRAND
+  ======================================================= */
+
   --navy: #101828;
   --navy-light: #1d2939;
 
-  /* Primary */
+  /* =======================================================
+     PRIMARY
+  ======================================================= */
+
   --blue: #2563eb;
   --blue-dark: #1d4ed8;
   --blue-soft: #eff6ff;
   --blue-border: #dbeafe;
 
-  /* Success */
+  /* =======================================================
+     SUCCESS
+  ======================================================= */
+
   --success: #16a34a;
   --success-dark: #15803d;
   --success-soft: #ecfdf3;
   --success-border: #d1fadf;
 
-  /* Danger */
+  /* =======================================================
+     DANGER
+  ======================================================= */
+
   --danger: #dc2626;
   --danger-dark: #b91c1c;
   --danger-soft: #fef2f2;
   --danger-border: #fecaca;
 
-  /* Warning */
+  /* =======================================================
+     WARNING
+  ======================================================= */
+
   --warning: #c2410c;
   --warning-soft: #fff7ed;
   --warning-border: #fed7aa;
 
-  /* Radius */
+  /* =======================================================
+     RADIUS
+  ======================================================= */
+
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
 
-  /* Shadows */
+  /* =======================================================
+     SHADOWS
+  ======================================================= */
+
   --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.06);
   --shadow-md: 0 8px 24px rgba(16, 24, 40, 0.07);
   --shadow-lg: 0 16px 40px rgba(16, 24, 40, 0.09);
-
-  color-scheme: light;
 }
 
 /* =========================================================
    DARK THEME
+
+   IMPORTANT:
+   --navy MUST stay dark.
+   Do NOT make --navy white in dark mode.
 ========================================================= */
 
 html.dark {
@@ -99,8 +137,8 @@ html.dark {
   --canvas: #0f141b;
   --canvas-deep: #0b1016;
 
-  --navy: #f5f7fa;
-  --navy-light: #ffffff;
+  --navy: #151a22;
+  --navy-light: #252c38;
 
   --blue: #60a5fa;
   --blue-dark: #3b82f6;
@@ -139,6 +177,7 @@ html {
   min-height: 100%;
   scroll-behavior: smooth;
   background: var(--canvas);
+  color: var(--ink);
 }
 
 body {
@@ -147,13 +186,48 @@ body {
   margin: 0;
 
   background: var(--canvas);
-
   color: var(--ink);
 
   transition:
     background-color 180ms ease,
     color 180ms ease;
 }
+
+/* React root must also follow the theme */
+
+#root {
+  min-width: 320px;
+  min-height: 100vh;
+
+  background: var(--canvas);
+  color: var(--ink);
+
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+/* Explicit dark background protection */
+
+html.dark,
+html.dark body,
+html.dark #root {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+/* Explicit light background protection */
+
+html:not(.dark),
+html:not(.dark) body,
+html:not(.dark) #root {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+/* =========================================================
+   FORM / MEDIA RESET
+========================================================= */
 
 button,
 input,
@@ -178,6 +252,10 @@ video {
 textarea {
   font-family: inherit;
 }
+
+/* =========================================================
+   TEXT SELECTION
+========================================================= */
 
 ::selection {
   color: #ffffff;
@@ -210,10 +288,27 @@ p {
 ========================================================= */
 
 .page-shell {
+  min-height: 100vh;
+
+  background: var(--canvas);
+  color: var(--ink);
+
   animation: rise-in 0.35s ease both;
+
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
 }
 
+/* =========================================================
+   BRAND MARK
+========================================================= */
+
 .brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   background: var(--navy);
   color: #ffffff;
 
@@ -221,13 +316,26 @@ p {
 
   transition:
     transform 160ms ease,
-    box-shadow 160ms ease;
+    box-shadow 160ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
 }
 
 .brand-mark:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
+
+/* Dark mode brand */
+
+html.dark .brand-mark {
+  background: #252c38;
+  color: #f5f7fa;
+}
+
+/* =========================================================
+   EYEBROW
+========================================================= */
 
 .eyebrow {
   color: var(--blue);
@@ -241,12 +349,16 @@ p {
   text-transform: uppercase;
 }
 
+/* =========================================================
+   SHADOW
+========================================================= */
+
 .soft-shadow {
   box-shadow: var(--shadow-md);
 }
 
 /* =========================================================
-   BUTTONS
+   PRIMARY BUTTON
 ========================================================= */
 
 .button-primary {
@@ -256,6 +368,7 @@ p {
   transition:
     transform 160ms ease,
     background-color 160ms ease,
+    color 160ms ease,
     box-shadow 160ms ease;
 }
 
@@ -271,6 +384,22 @@ p {
   transform: translateY(0);
 }
 
+/* Dark mode primary button */
+
+html.dark .button-primary {
+  background: #f5f7fa;
+  color: #101828;
+}
+
+html.dark .button-primary:hover:not(:disabled) {
+  background: #ffffff;
+  color: #101828;
+}
+
+/* =========================================================
+   ACCENT BUTTON
+========================================================= */
+
 .button-accent {
   background: var(--blue);
   color: #ffffff;
@@ -278,6 +407,7 @@ p {
   transition:
     transform 160ms ease,
     background-color 160ms ease,
+    color 160ms ease,
     box-shadow 160ms ease;
 }
 
@@ -291,6 +421,17 @@ p {
 
 .button-accent:active:not(:disabled) {
   transform: translateY(0);
+}
+
+/* Dark mode accent button */
+
+html.dark .button-accent {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+html.dark .button-accent:hover:not(:disabled) {
+  background: #2563eb;
 }
 
 /* =========================================================
@@ -311,7 +452,7 @@ textarea:focus-visible {
 }
 
 /* =========================================================
-   SURFACE / BACKGROUND UTILITIES
+   SURFACE GRID
 ========================================================= */
 
 .surface-grid {
@@ -321,6 +462,8 @@ textarea:focus-visible {
 
   background-size: 32px 32px;
 }
+
+/* Dark surface grid */
 
 html.dark .surface-grid {
   background-image:
@@ -342,7 +485,8 @@ textarea {
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease,
-    background-color 160ms ease;
+    background-color 160ms ease,
+    color 160ms ease;
 }
 
 input::placeholder,
@@ -361,18 +505,56 @@ textarea:focus {
 }
 
 /* =========================================================
-   SMOOTH THEME TRANSITIONS
+   DARK FORM PROTECTION
 ========================================================= */
 
-html.dark body,
-html.dark button,
 html.dark input,
 html.dark select,
-html.dark textarea,
-html.dark section,
-html.dark aside,
-html.dark header,
-html.dark main {
+html.dark textarea {
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--line-strong);
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: var(--muted-light);
+}
+
+/* =========================================================
+   COMMON DARK ELEMENTS
+========================================================= */
+
+html.dark hr {
+  border-color: var(--line);
+}
+
+html.dark svg {
+  color: inherit;
+}
+
+html.dark ::placeholder {
+  color: var(--muted-light);
+}
+
+/* =========================================================
+   THEME TRANSITIONS
+========================================================= */
+
+body,
+#root,
+.page-shell,
+header,
+main,
+section,
+aside,
+nav,
+button,
+input,
+select,
+textarea,
+div,
+article {
   transition:
     background-color 180ms ease,
     border-color 180ms ease,
@@ -485,4 +667,31 @@ html.dark main {
   h3 {
     letter-spacing: -0.02em;
   }
+}
+/* =========================================================
+   FINAL DARK MODE OVERRIDE
+========================================================= */
+
+html.dark {
+  --navy: #151a22 !important;
+  --navy-light: #252c38 !important;
+
+  --canvas: #0f141b !important;
+  --canvas-deep: #0b1016 !important;
+
+  --surface: #151a22 !important;
+  --surface-soft: #1b212b !important;
+  --surface-muted: #252c38 !important;
+
+  --ink: #f5f7fa !important;
+  --ink-soft: #d0d5dd !important;
+  --muted: #98a2b3 !important;
+  --muted-light: #667085 !important;
+}
+
+html.dark body,
+html.dark #root,
+html.dark .page-shell {
+  background-color: #0f141b !important;
+  color: #f5f7fa !important;
 }

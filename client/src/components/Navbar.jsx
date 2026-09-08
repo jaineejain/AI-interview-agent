@@ -105,6 +105,10 @@ function Navbar() {
 
   return (
     <>
+      {/* =====================================================
+          NAVBAR
+      ====================================================== */}
+
       <div className="sticky top-0 z-40 flex justify-center border-b border-[var(--line)] bg-[var(--canvas)]/90 px-3 py-3 backdrop-blur-md sm:px-5 sm:py-4">
         <motion.nav
           initial={{ opacity: 0, y: -12 }}
@@ -141,7 +145,9 @@ function Navbar() {
           ================================================== */}
 
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Theme */}
+            {/* =================================================
+                THEME TOGGLE
+            ================================================== */}
 
             <button
               type="button"
@@ -156,7 +162,7 @@ function Navbar() {
                   ? "Switch to light theme"
                   : "Switch to dark theme"
               }
-              className="focus-ring flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition hover:border-[var(--line-strong)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink)]"
+              className="focus-ring flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition-colors duration-200 hover:border-[var(--line-strong)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink)]"
             >
               <AnimatePresence mode="wait" initial={false}>
                 {theme === "dark" ? (
@@ -181,16 +187,18 @@ function Navbar() {
               </AnimatePresence>
             </button>
 
-            {/* Credits */}
+            {/* =================================================
+                CREDITS
+            ================================================== */}
 
             <div className="relative">
               <button
                 type="button"
                 onClick={openCredits}
                 aria-label="View interview credits"
-                className="focus-ring flex h-9 items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-2.5 text-sm font-bold text-[var(--ink-soft)] transition hover:border-[var(--line-strong)] hover:bg-[var(--surface-soft)] sm:px-3"
+                className="focus-ring flex h-9 items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-2.5 text-sm font-bold text-[var(--ink-soft)] transition-colors duration-200 hover:border-[var(--line-strong)] hover:bg-[var(--surface-soft)] sm:px-3"
               >
-                <BsCoin size={16} className="text-[var(--blue)]" />
+                <BsCoin size={16} className="shrink-0 text-[var(--blue)]" />
 
                 <span>{userData?.credits || 0}</span>
 
@@ -243,20 +251,34 @@ function Navbar() {
               </AnimatePresence>
             </div>
 
-            {/* Divider */}
+            {/* =================================================
+                DIVIDER
+            ================================================== */}
 
             <div className="mx-1 hidden h-6 w-px bg-[var(--line)] sm:block" />
 
-            {/* User */}
+            {/* =================================================
+                USER MENU
+            ================================================== */}
 
             <div className="relative">
               <button
                 type="button"
                 onClick={openUserMenu}
                 aria-label="Open user menu"
-                className="focus-ring flex h-9 items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-1.5 pr-2 text-[var(--ink)] transition hover:border-[var(--line-strong)] hover:bg-[var(--surface-soft)] sm:h-10 sm:pl-1.5"
+                className="focus-ring flex h-9 items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-1.5 pr-2 text-[var(--ink)] transition-colors duration-200 hover:border-[var(--line-strong)] hover:bg-[var(--surface-soft)] sm:h-10 sm:pl-1.5"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--navy)] text-xs font-bold text-white">
+                {/* =================================================
+                    USER AVATAR
+
+                    Light:
+                    dark navy background + white text
+
+                    Dark:
+                    muted dark background + light text
+                ================================================== */}
+
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--navy)] text-xs font-bold text-white transition-colors duration-200 dark:bg-[var(--surface-muted)] dark:text-[var(--ink)]">
                   {userData ? (
                     userData?.name?.slice(0, 1).toUpperCase()
                   ) : (
@@ -273,6 +295,10 @@ function Navbar() {
                 <BsChevronDown className="hidden text-[9px] text-[var(--muted-light)] sm:block" />
               </button>
 
+              {/* =================================================
+                  USER DROPDOWN
+              ================================================== */}
+
               <AnimatePresence>
                 {showUserPopup && (
                   <motion.div
@@ -282,7 +308,9 @@ function Navbar() {
                     transition={{ duration: 0.15 }}
                     className="absolute right-0 mt-2.5 w-60 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-[var(--shadow-lg)]"
                   >
-                    {/* User info */}
+                    {/* =================================================
+                        USER INFO
+                    ================================================== */}
 
                     <div className="mb-1 rounded-xl bg-[var(--surface-soft)] px-3 py-3">
                       <p className="truncate text-sm font-bold text-[var(--ink)]">
@@ -294,7 +322,9 @@ function Navbar() {
                       </p>
                     </div>
 
-                    {/* History */}
+                    {/* =================================================
+                        HISTORY
+                    ================================================== */}
 
                     <button
                       type="button"
@@ -302,17 +332,19 @@ function Navbar() {
                         setShowUserPopup(false);
                         navigate("/history");
                       }}
-                      className="focus-ring flex w-full items-center rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-[var(--ink-soft)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--blue)]"
+                      className="focus-ring flex w-full items-center rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-[var(--ink-soft)] transition-colors duration-200 hover:bg-[var(--surface-soft)] hover:text-[var(--blue)]"
                     >
                       Interview History
                     </button>
 
-                    {/* Logout */}
+                    {/* =================================================
+                        LOGOUT
+                    ================================================== */}
 
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="focus-ring flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-[var(--danger)] transition hover:bg-[var(--danger-soft)]"
+                      className="focus-ring flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-[var(--danger)] transition-colors duration-200 hover:bg-[var(--danger-soft)]"
                     >
                       <HiOutlineLogout size={15} />
                       Logout

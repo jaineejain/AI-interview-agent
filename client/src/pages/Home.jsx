@@ -30,8 +30,14 @@ import analyticsImg from "../assets/history.png";
 
 function Home() {
   const { userData } = useSelector((state) => state.user);
+
   const [showAuth, setShowAuth] = useState(false);
+
   const navigate = useNavigate();
+
+  // =========================================================
+  // START INTERVIEW
+  // =========================================================
 
   const handleStartInterview = () => {
     if (!userData) {
@@ -42,6 +48,10 @@ function Home() {
     navigate("/interview");
   };
 
+  // =========================================================
+  // VIEW HISTORY
+  // =========================================================
+
   const handleViewHistory = () => {
     if (!userData) {
       setShowAuth(true);
@@ -50,6 +60,10 @@ function Home() {
 
     navigate("/history");
   };
+
+  // =========================================================
+  // WORKFLOW
+  // =========================================================
 
   const workflow = [
     {
@@ -71,6 +85,10 @@ function Home() {
       desc: "Get detailed feedback and understand where to improve.",
     },
   ];
+
+  // =========================================================
+  // CAPABILITIES
+  // =========================================================
 
   const capabilities = [
     {
@@ -98,6 +116,10 @@ function Home() {
       desc: "Track your performance across previous interview sessions.",
     },
   ];
+
+  // =========================================================
+  // INTERVIEW MODES
+  // =========================================================
 
   const interviewModes = [
     {
@@ -135,7 +157,7 @@ function Home() {
       ====================================================== */}
 
       <main>
-        <section className="relative overflow-hidden border-b border-[var(--line)]">
+        <section className="relative overflow-hidden border-b border-[var(--line)] bg-[var(--canvas)]">
           <div className="surface-grid absolute inset-0 opacity-60" />
 
           <div className="relative mx-auto max-w-7xl px-5 pb-20 pt-14 sm:px-8 sm:pb-24 sm:pt-20 lg:px-10 lg:pb-28">
@@ -203,7 +225,7 @@ function Home() {
                 <button
                   type="button"
                   onClick={handleViewHistory}
-                  className="focus-ring inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] px-7 py-3.5 text-sm font-bold text-[var(--ink-soft)] shadow-sm transition hover:border-[var(--blue)] hover:text-[var(--blue)]"
+                  className="focus-ring inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] px-7 py-3.5 text-sm font-bold text-[var(--ink-soft)] shadow-sm transition-colors duration-200 hover:border-[var(--blue)] hover:text-[var(--blue)]"
                 >
                   View History
                 </button>
@@ -268,7 +290,7 @@ function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
                 transition={{ duration: 0.35, delay: index * 0.06 }}
-                className="group relative bg-[var(--surface)] p-6 sm:p-7"
+                className="group relative bg-[var(--surface)] p-6 transition-colors duration-200 sm:p-7"
               >
                 <div className="mb-8 flex items-center justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--blue-soft)] text-[var(--blue)]">
@@ -298,7 +320,7 @@ function Home() {
             CAPABILITIES
         ====================================================== */}
 
-        <section className="border-y border-[var(--line)] bg-[var(--surface-soft)]">
+        <section className="border-y border-[var(--line)] bg-[var(--surface-soft)] transition-colors duration-200">
           <div className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:px-10 lg:py-24">
             <div className="max-w-2xl">
               <p className="eyebrow mb-2">Built for better preparation</p>
@@ -398,7 +420,7 @@ function Home() {
                       </p>
                     </div>
 
-                    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-soft)]">
+                    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-soft)] transition-colors duration-200">
                       <img
                         src={mode.img}
                         alt={mode.title}
@@ -409,6 +431,7 @@ function Home() {
 
                   <div className="mt-8 flex items-center gap-2 text-xs font-bold text-[var(--blue)]">
                     <span>Available in interview setup</span>
+
                     <BsArrowRight className="transition-transform duration-200 group-hover:translate-x-1" />
                   </div>
                 </div>
@@ -422,18 +445,18 @@ function Home() {
         ====================================================== */}
 
         <section className="mx-auto w-full max-w-7xl px-5 pb-20 sm:px-8 lg:px-10 lg:pb-24">
-          <div className="overflow-hidden rounded-2xl bg-[var(--navy)] px-6 py-12 text-white sm:px-10 sm:py-14 lg:px-14">
+          <div className="overflow-hidden rounded-2xl bg-[#101828] px-6 py-12 text-white transition-colors duration-200 dark:bg-[#151a22] sm:px-10 sm:py-14 lg:px-14">
             <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
               <div className="max-w-2xl">
-                <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-white/55">
+                <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-white/60">
                   Ready when you are
                 </p>
 
-                <h2 className="text-2xl font-bold sm:text-3xl">
+                <h2 className="text-2xl font-bold text-white sm:text-3xl">
                   Turn interview practice into interview confidence.
                 </h2>
 
-                <p className="mt-3 max-w-xl text-sm leading-6 text-white/65">
+                <p className="mt-3 max-w-xl text-sm leading-6 text-white/70">
                   Start a realistic AI interview and get actionable feedback
                   after every answer.
                 </p>
@@ -442,7 +465,7 @@ function Home() {
               <button
                 type="button"
                 onClick={handleStartInterview}
-                className="focus-ring inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-[#101828] transition hover:bg-[#f2f4f7]"
+                className="focus-ring inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-[#101828] transition-colors duration-200 hover:bg-[#f2f4f7]"
               >
                 Start practicing
                 <BsArrowRight />
