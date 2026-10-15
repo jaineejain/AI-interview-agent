@@ -36,6 +36,7 @@ function Step1SetUp({ onStart }) {
 
   const [resumeFile, setResumeFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [requestError, setRequestError] = useState("");
 
   const [projects, setProjects] = useState([]);
   const [skills, setSkills] = useState([]);
@@ -99,6 +100,7 @@ function Step1SetUp({ onStart }) {
     if (!resumeFile || analyzing) return;
 
     setAnalyzing(true);
+    setRequestError("");
 
     const formdata = new FormData();
     formdata.append("resume", resumeFile);
@@ -122,6 +124,9 @@ function Step1SetUp({ onStart }) {
       setAnalyzing(false);
     } catch (error) {
       console.log("RESUME ANALYSIS ERROR:", error.response?.data || error);
+      setRequestError(
+        "Resume analysis needs the backend and OpenRouter service. You can still fill in the interview details manually.",
+      );
       setAnalyzing(false);
     }
   };
@@ -130,6 +135,7 @@ function Step1SetUp({ onStart }) {
     if (!role || !experience || loading) return;
 
     setLoading(true);
+    setRequestError("");
 
     try {
       const result = await axios.post(
@@ -170,6 +176,10 @@ function Step1SetUp({ onStart }) {
         error.response?.data || error.message,
       );
       console.log("STATUS:", error.response?.status);
+      setRequestError(
+        error.response?.data?.message ||
+          "AI interview generation is unavailable because the backend is not reachable. Start the server or add VITE_API_URL to use this feature.",
+      );
 
       setLoading(false);
     }
@@ -222,6 +232,15 @@ function Step1SetUp({ onStart }) {
             </p>
           </div>
         </motion.header>
+
+        {requestError && (
+          <div
+            role="alert"
+            className="mb-6 rounded-xl border border-[var(--warning-border)] bg-[var(--warning-soft)] px-4 py-3 text-sm leading-6 text-[var(--warning)]"
+          >
+            {requestError}
+          </div>
+        )}
 
         {/* =====================================================
             PROGRESS

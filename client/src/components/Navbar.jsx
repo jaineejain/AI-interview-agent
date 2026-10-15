@@ -10,6 +10,7 @@ import axios from "axios";
 import { ServerUrl } from "../App";
 import { setUserData } from "../redux/userSlice";
 import AuthModel from "./AuthModel";
+import { clearGuestSession } from "../utils/guestMode";
 
 function Navbar() {
   const { userData } = useSelector((state) => state.user);
@@ -64,10 +65,13 @@ function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await axios.get(ServerUrl + "/api/auth/logout", {
-        withCredentials: true,
-      });
+      if (!userData?.isGuest && ServerUrl) {
+        await axios.get(ServerUrl + "/api/auth/logout", {
+          withCredentials: true,
+        });
+      }
 
+      clearGuestSession();
       dispatch(setUserData(null));
 
       setShowCreditPopup(false);
@@ -318,7 +322,9 @@ function Navbar() {
                       </p>
 
                       <p className="mt-0.5 text-[11px] text-[var(--muted)]">
-                        Interview candidate
+                        {userData?.isGuest
+                          ? "Local guest session"
+                          : "Interview candidate"}
                       </p>
                     </div>
 

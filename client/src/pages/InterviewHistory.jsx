@@ -18,9 +18,12 @@ import {
   FaMedal,
 } from "react-icons/fa";
 import { motion } from "motion/react";
+import { useSelector } from "react-redux";
 
 function InterviewHistory() {
   const [interviews, setInterviews] = useState([]);
+  const [historyMessage, setHistoryMessage] = useState("");
+  const { userData } = useSelector((state) => state.user);
 
   const [goal, setGoal] = useState(() => {
     const savedGoal = Number(localStorage.getItem("interviewWeeklyGoal"));
@@ -34,6 +37,13 @@ function InterviewHistory() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (userData?.isGuest) {
+      setHistoryMessage(
+        "Guest mode does not sync interview history because there is no backend account. Sign in with Google after the server is configured to save history.",
+      );
+      return;
+    }
+
     const getMyInterviews = async () => {
       try {
         const result = await axios.get(
@@ -44,11 +54,14 @@ function InterviewHistory() {
         setInterviews(Array.isArray(result.data) ? result.data : []);
       } catch (error) {
         console.log("GET INTERVIEW HISTORY ERROR:", error);
+        setHistoryMessage(
+          "Interview history is unavailable because the backend could not be reached.",
+        );
       }
     };
 
     getMyInterviews();
-  }, []);
+  }, [userData]);
 
   /*
     Only completed interviews should count toward
@@ -391,6 +404,15 @@ function InterviewHistory() {
             </p>
           </div>
         </div>
+
+        {historyMessage && (
+          <div
+            role="status"
+            className="mb-6 rounded-xl border border-[var(--blue-border)] bg-[var(--blue-soft)] px-4 py-3 text-sm leading-6 text-[var(--blue)]"
+          >
+            {historyMessage}
+          </div>
+        )}
 
         {/* =====================================================
             PROGRESS + STREAK + GOAL

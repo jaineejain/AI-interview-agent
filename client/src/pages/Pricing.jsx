@@ -13,12 +13,15 @@ import axios from "axios";
 import { ServerUrl } from "../App";
 import { useDispatch } from "react-redux";
 import { setUserData } from "../redux/userSlice";
+import { useSelector } from "react-redux";
 
 function Pricing() {
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState("free");
   const [loadingPlan, setLoadingPlan] = useState(null);
   const dispatch = useDispatch();
+  const { userData } = useSelector((state) => state.user);
+  const [paymentError, setPaymentError] = useState("");
 
   const loadRazorpay = () =>
     new Promise((resolve, reject) => {
@@ -81,6 +84,21 @@ function Pricing() {
 
   const handlePayment = async (plan) => {
     try {
+      if (userData?.isGuest) {
+        setPaymentError(
+          "Payments and credit purchases require a Google account and a configured backend.",
+        );
+        return;
+      }
+
+      if (!ServerUrl) {
+        setPaymentError(
+          "Payments are unavailable because the backend URL is not configured.",
+        );
+        return;
+      }
+
+      setPaymentError("");
       setLoadingPlan(plan.id);
 
       const amount = plan.id === "basic" ? 100 : plan.id === "pro" ? 500 : 0;
@@ -129,6 +147,10 @@ function Pricing() {
       setLoadingPlan(null);
     } catch (error) {
       console.log(error);
+      setPaymentError(
+        error.response?.data?.message ||
+          "Payment could not be started. Please check that the backend is running.",
+      );
       setLoadingPlan(null);
     }
   };
@@ -177,6 +199,15 @@ function Pricing() {
 
           <div className="hidden h-11 w-11 shrink-0 sm:block" />
         </div>
+
+        {paymentError && (
+          <div
+            role="alert"
+            className="mx-auto mb-8 max-w-2xl rounded-xl border border-[var(--warning-border)] bg-[var(--warning-soft)] px-4 py-3 text-center text-sm leading-6 text-[var(--warning)]"
+          >
+            {paymentError}
+          </div>
+        )}
 
         {/* Trust strip */}
         <div className="mx-auto mb-10 flex max-w-3xl flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs font-medium text-[var(--muted)] sm:mb-12 sm:text-sm">

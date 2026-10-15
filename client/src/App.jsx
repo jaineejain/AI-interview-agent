@@ -11,8 +11,9 @@ import Pricing from "./pages/Pricing";
 import InterviewReport from "./pages/InterviewReport";
 
 import { setUserData } from "./redux/userSlice";
+import { getGuestUser } from "./utils/guestMode";
 
-export const ServerUrl = import.meta.env.VITE_API_URL;
+export const ServerUrl = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 
 function App() {
   const dispatch = useDispatch();
@@ -21,6 +22,18 @@ function App() {
   useEffect(() => {
     // Don't check session while already on auth page
     if (location.pathname === "/auth") return;
+
+    const guestUser = getGuestUser();
+
+    if (guestUser) {
+      dispatch(setUserData(guestUser));
+      return;
+    }
+
+    if (!ServerUrl) {
+      dispatch(setUserData(null));
+      return;
+    }
 
     const getUser = async () => {
       try {

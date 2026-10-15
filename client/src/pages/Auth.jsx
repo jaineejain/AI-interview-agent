@@ -12,9 +12,16 @@ import { ServerUrl } from "../App";
 
 import { useDispatch } from "react-redux";
 import { setUserData } from "../redux/userSlice";
+import { useNavigate } from "react-router-dom";
+import {
+  clearGuestSession,
+  getGuestUser,
+  startGuestSession,
+} from "../utils/guestMode";
 
 function Auth({ isModel = false }) {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const [authError, setAuthError] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -48,6 +55,7 @@ function Auth({ isModel = false }) {
         },
       );
 
+      clearGuestSession();
       console.log("CURRENT USER SUCCESS:", currentUser.data);
 
       dispatch(setUserData(currentUser.data));
@@ -74,9 +82,22 @@ function Auth({ isModel = false }) {
     }
   };
 
+  const handleGuestLogin = () => {
+    setAuthError("");
+    dispatch(setUserData(startGuestSession()));
+
+    if (!isModel) {
+      navigate("/");
+    }
+  };
+
   useEffect(() => {
     console.log("Firebase Auth initialized:", !!auth);
-  }, []);
+
+    if (!isModel && getGuestUser()) {
+      navigate("/");
+    }
+  }, [isModel, navigate]);
 
   const handleGoogleAuth = async () => {
     if (isSigningIn) return;
@@ -263,12 +284,29 @@ function Auth({ isModel = false }) {
               </>
             )}
           </motion.button>
+
+          <motion.button
+            type="button"
+            onClick={handleGuestLogin}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.985 }}
+            className="
+              focus-ring mt-3 flex w-full items-center justify-center gap-2
+              rounded-xl border border-[var(--blue-border)]
+              bg-[var(--blue-soft)] px-5 py-3.5
+              text-sm font-bold text-[var(--blue)]
+              transition-all duration-200 hover:shadow-sm
+            "
+          >
+            Continue as Guest
+            <BsArrowRight />
+          </motion.button>
         </div>
 
         {/* Trust */}
         <div className="mt-6 flex items-center justify-center gap-2 text-xs text-[var(--muted)]">
           <BsShieldCheck className="text-[var(--success)]" />
-          <span>Secure authentication powered by Google</span>
+          <span>Google sign-in is optional. Guest data stays in this browser.</span>
         </div>
 
         {/* Divider */}
@@ -315,8 +353,8 @@ function Auth({ isModel = false }) {
         {/* Footer note */}
         {!isModel && (
           <p className="mt-7 text-center text-[11px] leading-5 text-[var(--muted)]">
-            By continuing, you can access your interview history, reports,
-            credits, and AI practice workspace.
+            Guest mode lets you explore the workspace without an account.
+            Backend-powered AI features need the server to be running.
           </p>
         )}
       </motion.div>
